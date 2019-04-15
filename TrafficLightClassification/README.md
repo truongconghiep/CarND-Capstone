@@ -1,7 +1,5 @@
-https://github.com/bosch-ros-pkg/bstld
-
-### Training the model
-#### Install Linux
+## Training the model
+### Install Linux
 ```
 sudo apt-get update
 pip install --upgrade dask
@@ -41,8 +39,8 @@ protoc object_detection/protos/*.proto --python_out=.
 export PYTHONPATH=$PYTHONPATH:`pwd`:`pwd`/slim
 python object_detection/builders/model_builder_test.py
 ```
-#### Data
-#####Real World
+### Data
+#### Real World
 Images with labeled traffic lights can be found on
 
 1.  [Bosch Small Traffic Lights Dataset](https://hci.iwr.uni-heidelberg.de/node/6132)
@@ -50,19 +48,19 @@ Images with labeled traffic lights can be found on
 3.  Udacity's ROSbag file from Carla
 4.  Traffic lights from Udacity's simulator
 
-##### Simulation
+#### Simulation
 Training images for simulation can be found downloaded from Vatsal Srivastava's dataset and Alex Lechners's dataset. The images are already labeled and a  [TFRecord file](https://github.com/alex-lechner/Traffic-Light-Classification#23-create-a-tfrecord-file)  is provided as well:
 
 1.  [Vatsal's dataset](https://github.com/coldKnight/TrafficLight_Detection-TensorFlowAPI#get-the-dataset)
 2.  [Alex Lechner's dataset](https://www.dropbox.com/s/vaniv8eqna89r20/alex-lechner-udacity-traffic-light-dataset.zip?dl=0)
 
-#### Model 
+### Model 
 
 The model "SSD Mobilenet V1" was used for classification of the Bosch Small Traffic Lights Dataset. See the performance on this page https://github.com/bosch-ros-pkg/bstld .
 
 The model "SSD Inception V2" seems to perform better at the expense of speed. See [Model Zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md)
 
-#### Download
+### Download
 switch to the models directory and download 
 ```
 wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2018_01_28.tar.gz
@@ -75,7 +73,7 @@ tar -xzf ssd_mobilenet_v1_coco_2018_01_28.tar.gz
 tar -xzf ssd_inception_v2_coco_2018_01_28.tar.gz
 ```
 
-#### Model Configuration
+### Model Configuration
 
 Go back to the TrafficLightClassification directory and create a config directory.
 
@@ -89,7 +87,7 @@ cp models/research/object_detection/samples/configs/ssd_mobilenet_v1_coco.config
 cp models/research/object_detection/samples/configs/ssd_inception_v2_coco.config config/
 ```
 
-##### Cofiguration on Udacity Carla dataset for "SSD Inception V2"
+#### Cofiguration on Udacity Simulation dataset for "SSD Inception V2"
 
 Configuration taken from https://github.com/bosch-ros-pkg/bstld/blob/master/tf_object_detection/configs/ssd_mobilenet_v1.config
 
@@ -105,4 +103,43 @@ Copy `train.py` from `TrafficLightClassification/models/research/object_detectio
 Start Training with 
 ```
 python train.py --logtostderr --train_dir=./models/train --pipeline_config_path=./config/ssd_inception_v2_coco-simulator.config
+```
+
+### Freeze
+The trained model needs to be frozen for production. Just copy `export_inference_graph.py`  from `TrafficLightClassification/models/research/object_detection` to `TrafficLightClassification` folder. 
+
+Execute:
+```
+python export_inference_graph.py --input_type image_tensor --pipeline_config_path ./config/ssd_inception_v2_coco-simulator.config --trained_checkpoint_prefix ./models/train/model.ckpt-20000 --output_directory models
+```
+
+If this results in an error:
+```
+  File "/home/mona/src/udacity/CarND-Capstone-Root/CarND-Capstone/TrafficLightClassification/models/research/object_detection/exporter.py", line 72, in freeze_graph_with_def_protos
+    optimize_tensor_layout=1)
+ValueError: Protocol message RewriterConfig has no "optimize_tensor_layout" field.
+```
+
+You need to change the file `TrafficLightClassification/models/research/object_detection/exporter.py` at line 72
+
+See Change: https://github.com/tensorflow/models/pull/3106/files
+
+Original:
+```
+      rewrite_options = rewriter_config_pb2.RewriterConfig(
+          optimize_tensor_layout=True)
+```
+
+Changed:
+```
+      rewrite_options = rewriter_config_pb2.RewriterConfig(
+          layout_optimizer=rewriter_config_pb2.RewriterConfig.ON)
+```
+
+You may find the frozen graph `frozen_inference_graph.pb` in `TrafficLightClassification/models`
+
+## Detection
+The [object detection tutorial - a jupyter notebook](https://github.com/tensorflow/models/blob/master/research/object_detection/object_detection_tutorial.ipynb) walks you through the steps
+
+I copy and pasted many of these steps into the detector.py
 
