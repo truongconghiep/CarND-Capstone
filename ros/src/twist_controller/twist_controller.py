@@ -19,7 +19,7 @@ class Controller(object):
         ki = 0.1
         kd = 0.0
         mn = 0.0 # Minimum throttle value
-        mx = 0.2 # Maximum throttle value
+        mx = 0.2 # Maximum throttle value, **** Increase this if desired
         self.throttle_controller = PID(kp, ki, kd, mn, mx)
         
         tau = 0.5 # 1/(2pi*tau) = cutoff frequency
@@ -46,13 +46,15 @@ class Controller(object):
         current_vel = self.vel_lpf.filt(current_vel)
         
         # rospy.logwarn("Angular velocity: {0}".format(angular_vel))
-        # rospy.logwarn("Target velocity: {0}".format(linear)vel))
+        # rospy.logwarn("Target velocity: {0}".format(linear_vel))
         # rospy.logwarn("Target angular velocity: {0}\n".format(angular_vel))
         # rospy.logwarn("Current velocity: {0}".format(current_vel))
         # rospy.logwarn("Filtered velocity: {0}".format(self.vel_lpf.get()))
         
         # **** Possibly add dampening terms below to reduce steering jerk when vehicle is wandering
         steering = self.yaw_controller.get_steering(linear_vel, angular_vel, current_vel)
+        
+        # rospy.logwarn("Steering: {0}".format(steering))
         
         vel_error = linear_vel - current_vel
         self.last_vel = current_vel
