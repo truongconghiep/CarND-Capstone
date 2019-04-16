@@ -1,4 +1,6 @@
+import glob
 import numpy as np
+import ntpath
 import os
 import six.moves.urllib as urllib
 import sys
@@ -13,22 +15,25 @@ from matplotlib import pyplot as plt
 from PIL import Image
 
 # This is needed since the notebook is stored in the object_detection folder.
-sys.path.append("..")
+sys.path.append("models/research")
 from object_detection.utils import ops as utils_ops
 
 if StrictVersion(tf.__version__) < StrictVersion('1.12.0'):
   raise ImportError('Please upgrade your TensorFlow installation to v1.12.*.')
 
 
-from utils import label_map_util
-from utils import visualization_utils as vis_util
+from object_detection.utils import label_map_util
+from object_detection.utils import visualization_utils as vis_util
 
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
-MODEL_NAME = 'model/ssd-simulation'
+MODEL_NAME = 'frozen-ssd_inception-simulation'
 PATH_TO_FROZEN_GRAPH = MODEL_NAME + '/frozen_inference_graph.pb'
 
 # List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = os.path.join('data', 'mscoco_label_map.pbtxt')
+PATH_TO_LABELS = os.path.join('data', 'udacity_label_map.pbtxt')
+
+PATH_TO_TEST_IMAGES_DIR = 'test_images/simulation'
+PATH_TO_TEST_IMAGES_OUTPUTDIR = 'test_images_results/simulation'
 
 
 # Load a (frozen) Tensorflow model into memory.
@@ -41,7 +46,7 @@ with detection_graph.as_default():
     tf.import_graph_def(od_graph_def, name='')
 
 # Loading label map
-category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
+category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS)
 
 # helper to load an image into a numpy array
 def load_image_into_numpy_array(image):
@@ -53,8 +58,7 @@ def load_image_into_numpy_array(image):
 #
 # Detection
 #
-PATH_TO_TEST_IMAGES_DIR = 'test_images'
-TEST_IMAGE_PATHS = [ os.path.join(PATH_TO_TEST_IMAGES_DIR, 'image{}.jpg'.format(i)) for i in range(1, 3) ]
+TEST_IMAGE_PATHS = glob.glob(os.path.join(PATH_TO_TEST_IMAGES_DIR, '*.jpg'))
 
 # Size, in inches, of the output images.
 IMAGE_SIZE = (12, 8)
@@ -128,3 +132,8 @@ for image_path in TEST_IMAGE_PATHS:
       line_thickness=8)
   plt.figure(figsize=IMAGE_SIZE)
   plt.imshow(image_np)
+  #plt.show()
+  result_image_filename = os.path.join(PATH_TO_TEST_IMAGES_OUTPUTDIR, ntpath.basename(image_path))
+  plt.savefig(result_image_filename)
+
+

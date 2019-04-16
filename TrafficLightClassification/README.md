@@ -1,5 +1,5 @@
-## Training the model
-### Install Linux
+## Setup
+### Installation on Linux
 ```
 sudo apt-get update
 pip install --upgrade dask
@@ -39,6 +39,8 @@ protoc object_detection/protos/*.proto --python_out=.
 export PYTHONPATH=$PYTHONPATH:`pwd`:`pwd`/slim
 python object_detection/builders/model_builder_test.py
 ```
+
+## Training the model
 ### Data
 #### Real World
 Images with labeled traffic lights can be found on
@@ -58,7 +60,7 @@ Training images for simulation can be found downloaded from Vatsal Srivastava's 
 
 The model "SSD Mobilenet V1" was used for classification of the Bosch Small Traffic Lights Dataset. See the performance on this page https://github.com/bosch-ros-pkg/bstld .
 
-The model "SSD Inception V2" seems to perform better at the expense of speed. See [Model Zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md)
+The model "SSD Inception V2" seems to perform better at the expense of speed. See [Model Zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md) to see the performance comparison.
 
 ### Download
 switch to the models directory and download 
@@ -102,7 +104,7 @@ Copy `train.py` from `TrafficLightClassification/models/research/object_detectio
 
 Start Training with 
 ```
-python train.py --logtostderr --train_dir=./models/train --pipeline_config_path=./config/ssd_inception_v2_coco-simulator.config
+python train.py --logtostderr --train_dir=./models/train-ssd-inception-simulation --pipeline_config_path=./config/ssd_inception_v2_coco-simulator.config
 ```
 
 ### Freeze
@@ -110,7 +112,7 @@ The trained model needs to be frozen for production. Just copy `export_inference
 
 Execute:
 ```
-python export_inference_graph.py --input_type image_tensor --pipeline_config_path ./config/ssd_inception_v2_coco-simulator.config --trained_checkpoint_prefix ./models/train/model.ckpt-20000 --output_directory models
+python export_inference_graph.py --input_type image_tensor --pipeline_config_path ./config/ssd_inception_v2_coco-simulator.config --trained_checkpoint_prefix ./models/train-ssd-inception-simulation/model.ckpt-20000 --output_directory models/frozen-ssd_inception-simulation
 ```
 
 If this results in an error:
@@ -143,3 +145,18 @@ The [object detection tutorial - a jupyter notebook](https://github.com/tensorfl
 
 I copy and pasted many of these steps into the detector.py
 
+Take care that the following variables are set according to your needs:
+
+```
+MODEL_NAME = 'frozen-ssd_inception-simulation'
+PATH_TO_FROZEN_GRAPH = MODEL_NAME + '/frozen_inference_graph.pb'
+PATH_TO_LABELS = os.path.join('data', 'udacity_label_map.pbtxt')
+PATH_TO_TEST_IMAGES_DIR = 'test_images/simulation'
+PATH_TO_TEST_IMAGES_OUTPUTDIR = 'test_images_results/simulation'
+```
+
+execute 
+```
+python detector.py
+```
+The resulting images can be found in the directory `PATH_TO_TEST_IMAGES_OUTPUTDIR`
